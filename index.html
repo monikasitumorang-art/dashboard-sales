@@ -4,7 +4,7 @@
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<!-- SheetJS (XLSX.js) -->
+<!-- SheetJS (XLSX.js) untuk download Excel -->
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
 <div class="p-6 max-w-5xl mx-auto">
@@ -31,9 +31,9 @@
 </div>
 
 <script>
-  const sheetId = '1r1_E3dwi1sEven4ziuic2ygGVeupmcuygXm0JWraIg0';
-  const apiKey = 'AIzaSyCVZJgDJkurntemMC5yV2xSalLcxCM20fE';
-  const range = 'Sheet1!A1:F9';
+  const sheetId = '1r1_E3dwi1sEven4ziuic2ygGVeupmcuygXm0JWraIg0';  // ID Spreadsheet Kamu
+  const apiKey = 'AIzaSyCVZJgDJkurntemMC5yV2xSalLcxCM20fE';  // API Key Kamu
+  const range = 'Sheet1!A1:F9'; // Menentukan range yang ingin diambil
 
   let rawData = [];
 
@@ -45,6 +45,7 @@
         </thead>
         <tbody class="text-gray-800">
     `;
+
     for (let i = 1; i < data.length; i++) {
       html += `<tr class="border-b hover:bg-gray-50">`;
       data[i].forEach(cell => {
@@ -52,6 +53,7 @@
       });
       html += `</tr>`;
     }
+
     html += `</tbody></table>`;
     document.getElementById('google-sheet-data').innerHTML = html;
   }
@@ -60,6 +62,7 @@
     const labels = data.slice(1).map(row => row[1]); // Nama Produk
     const sales = data.slice(1).map(row => parseInt(row[4]) || 0); // Jumlah Terjual
 
+    // Menambahkan chart
     new Chart(document.getElementById('salesChart'), {
       type: 'bar',
       data: {
@@ -103,7 +106,7 @@
     .then(res => {
       rawData = res.values;
       renderTable(rawData);
-      renderChart(rawData);
+      renderChart(rawData); // Panggil fungsi untuk render chart
     });
 
   document.getElementById('filterInput').addEventListener('input', e => {
