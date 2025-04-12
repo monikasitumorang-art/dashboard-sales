@@ -1,0 +1,117 @@
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com"></script>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- SheetJS (XLSX.js) -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
+<div class="p-6 max-w-5xl mx-auto">
+  <h1 class="text-3xl font-bold mb-6">📊 Sales Dashboard</h1>
+
+  <!-- Filter -->
+  <div class="mb-4">
+    <input type="text" id="filterInput" placeholder="Cari Produk atau Kategori..."
+      class="w-full p-2 border rounded shadow-sm" />
+  </div>
+
+  <!-- Tabel -->
+  <div id="google-sheet-data" class="overflow-x-auto mb-6">
+    <p class="text-gray-500">Loading data...</p>
+  </div>
+
+  <!-- Tombol Ekspor -->
+  <button id="downloadExcel" class="mb-6 bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
+    ⬇️ Download Excel
+  </button>
+
+  <!-- Chart -->
+  <canvas id="salesChart" height="100"></canvas>
+</div>
+
+<script>
+  const sheetId = '1r1_E3dwi1sEven4ziuic2ygGVeupmcuygXm0JWraIg0';
+  const apiKey = 'AIzaSyCVZJgDJkurntemMC5yV2xSalLcxCM20fE';
+  const range = 'Sheet1!A1:F9';
+
+  let rawData = [];
+
+  function renderTable(data) {
+    let html = `
+      <table class="min-w-full bg-white shadow-md rounded-lg">
+        <thead class="bg-gray-100 text-gray-700">
+          <tr>${data[0].map(header => `<th class="py-2 px-4 text-left">${header}</th>`).join('')}</tr>
+        </thead>
+        <tbody class="text-gray-800">
+    `;
+    for (let i = 1; i < data.length; i++) {
+      html += `<tr class="border-b hover:bg-gray-50">`;
+      data[i].forEach(cell => {
+        html += `<td class="py-2 px-4">${cell}</td>`;
+      });
+      html += `</tr>`;
+    }
+    html += `</tbody></table>`;
+    document.getElementById('google-sheet-data').innerHTML = html;
+  }
+
+  function renderChart(data) {
+    const labels = data.slice(1).map(row => row[1]); // Nama Produk
+    const sales = data.slice(1).map(row => parseInt(row[4]) || 0); // Jumlah Terjual
+
+    new Chart(document.getElementById('salesChart'), {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Jumlah Terjual',
+          data: sales,
+          backgroundColor: '#3b82f6'
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: false }
+        },
+        scales: {
+          y: {
+            beginAtZero: true
+          }
+        }
+      }
+    });
+  }
+
+  function exportToExcel(data) {
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(data);
+    XLSX.utils.book_append_sheet(wb, ws, 'Sales');
+    XLSX.writeFile(wb, 'sales-data.xlsx');
+  }
+
+  function applyFilter(data, query) {
+    const lowerQuery = query.toLowerCase();
+    return [data[0], ...data.slice(1).filter(row =>
+      row.join(' ').toLowerCase().includes(lowerQuery)
+    )];
+  }
+
+  fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${range}?key=${apiKey}`)
+    .then(res => res.json())
+    .then(res => {
+      rawData = res.values;
+      renderTable(rawData);
+      renderChart(rawData);
+    });
+
+  document.getElementById('filterInput').addEventListener('input', e => {
+    const filtered = applyFilter(rawData, e.target.value);
+    renderTable(filtered);
+  });
+
+  document.getElementById('downloadExcel').addEventListener('click', () => {
+    exportToExcel(rawData);
+  });
+</script>
